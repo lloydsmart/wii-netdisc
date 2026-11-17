@@ -4,6 +4,11 @@ Inspected on **17 November 2026** through the GitHub connection. This review cov
 the named repositories and selected relevant files at the revisions below; it is
 not a complete security audit. No GitHub state was changed.
 
+This is a snapshot from before publication. The setup-state statements and
+remaining decisions below describe that point in time. For current contribution
+and reporting guidance, see [CONTRIBUTING.md](../CONTRIBUTING.md),
+[SECURITY.md](../SECURITY.md) and the [code of conduct](../CODE_OF_CONDUCT.md).
+
 ## Inspected revisions
 
 | Repository | Default branch | Revision |

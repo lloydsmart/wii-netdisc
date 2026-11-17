@@ -2,7 +2,7 @@
 
 The project currently accepts research, documentation and repository-quality work.
 Keep changes focused, explain their purpose and distinguish evidence from proposals.
-Be respectful, discuss disagreements constructively and avoid personal attacks.
+Follow the [code of conduct](CODE_OF_CONDUCT.md) when participating.
 
 ## Branch strategy
 
@@ -74,8 +74,13 @@ access. Both long-lived branches require an up-to-date `Repository checks` resul
 from GitHub Actions before merging. This is a documentation baseline, not a
 release or security certification.
 
-## Before publication
+## Questions and reports
 
-Review [the setup decisions](docs/repository-review.md#remaining-decisions).
-Choose an actual private security-reporting channel before adding SECURITY.md;
-do not substitute a GitHub noreply address or promise unsupported release SLAs.
+Use [GitHub issues](https://github.com/lloydsmart/wii-netdisc/issues) for research
+questions, documentation problems and suggestions. Check existing issues first
+and include the relevant file, commit or source reference.
+
+Report suspected vulnerabilities privately using [SECURITY.md](SECURITY.md).
+For conduct concerns, use the private contact in the
+[code of conduct](CODE_OF_CONDUCT.md). Keep sensitive information out of public
+issues and pull requests.
