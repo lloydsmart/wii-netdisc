@@ -17,9 +17,10 @@ Creating either branch on GitHub, selecting the default branch and setting
 protections are separate actions. Nothing in this document grants standing
 authorisation for an agent to commit, push or change settings.
 
-All commits must be signed with Lloyd Smart's GPG key, including the initial
-commit. Verify the signature after creating a commit. Never fall back to an unsigned
-commit if signing fails.
+Commits we create locally must be signed with Lloyd Smart's GPG key, including
+the initial commit. Verify the signature after creating a commit. GitHub-generated
+merge commits and Dependabot commits may use their own verified signatures.
+Never fall back to an unsigned commit if signing fails.
 
 Keep commit messages clear and focused. Conventional Commit prefixes are useful,
 but no mandatory title checker or DCO requirement has been added.
@@ -59,10 +60,19 @@ Run validators from a trusted installation or a temporary tool container; there 
 no need to install Wii tooling. Changes to CI tool versions should keep these
 instructions aligned.
 
-CI runs one `Repository checks` job on pull requests targeting `develop` or `main`,
-pushes to either branch, and manual dispatch. It has no path filters, write token
-permissions, deployment steps or hardware access. No GitHub run has occurred during
-local setup. This is a documentation baseline, not a release or security certification.
+CI runs one `Repository checks` job automatically when:
+
+- A pull request targeting `develop` or `main` is opened, reopened or updated with new commits.
+- A commit is pushed to `develop` or `main`, including a pull-request merge.
+
+Pushing a topic branch alone does not trigger CI; opening or updating its pull
+request does. Manual dispatch is available for diagnostics, but a successful
+manual run does not verify the automatic push or pull-request triggers.
+
+There are no path filters, write token permissions, deployment steps or hardware
+access. Both long-lived branches require an up-to-date `Repository checks` result
+from GitHub Actions before merging. This is a documentation baseline, not a
+release or security certification.
 
 ## Before publication
 

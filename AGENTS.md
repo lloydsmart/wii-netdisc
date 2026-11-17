@@ -35,9 +35,10 @@ Ask explicitly before committing, pushing, deleting files or refs, creating remo
 repositories or PRs, changing Git configuration/rules, releasing, or other
 consequential actions. Do not stage files as part of routine validation.
 
-All commits must be signed with the owner's configured GPG key. Verify the
-created commit's signature and signing fingerprint. Never fall back to an unsigned
-commit if signing fails.
+Commits we create locally must be signed with the owner's configured GPG key.
+Verify each created commit's signature and signing fingerprint. GitHub-generated
+merge commits and Dependabot commits may use their own verified signatures.
+Never fall back to an unsigned commit if signing fails.
 
 Use the agreed develop/main workflow after the approved initial bootstrap.
 Do not change branches merely to hide existing uncommitted work.
