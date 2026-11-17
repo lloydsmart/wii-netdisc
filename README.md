@@ -1,5 +1,9 @@
 # Wii NetDisc
 
+[![CI (develop)](https://github.com/lloydsmart/wii-netdisc/actions/workflows/ci.yml/badge.svg?branch=develop&event=push)](https://github.com/lloydsmart/wii-netdisc/actions/workflows/ci.yml)
+[![Licence: GPL-3.0-only](https://img.shields.io/badge/Licence-GPL--3.0--only-blue.svg)](LICENSE)
+[![Status: research](https://img.shields.io/badge/status-research-yellow.svg)](research/feasibility-plan.md)
+
 Wii NetDisc is a research-stage project exploring read-only streaming of Wii disc
 images over a wired network, with a runtime that could serve multiple frontends.
 
