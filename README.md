@@ -13,6 +13,8 @@ points still need source-level verification.
 - [Architecture boundaries](docs/architecture/README.md)
 - [Decision records](docs/decisions/README.md)
 - [Contributing and local checks](CONTRIBUTING.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+- [Security policy and private reporting](SECURITY.md)
 - [Instructions for coding agents](AGENTS.md)
 - [Repository conventions review and setup decisions](docs/repository-review.md)
 - [Historical archive provenance](research/historical/README.md)
@@ -47,8 +49,9 @@ task and its architecture have been approved.
 
 Use `develop` for integration and `main` for stable promotion, with short-lived topic
 branches. Bootstrap uses an approved, GPG-signed initial commit on main, with
-develop created from that commit. All commits must be signed with the owner's
-GPG key. See [CONTRIBUTING.md](CONTRIBUTING.md).
+develop created from that commit. Locally created commits must use the owner's
+GPG key; GitHub-generated merge commits and Dependabot commits may use their own
+verified signatures. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
