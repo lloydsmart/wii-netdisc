@@ -76,9 +76,10 @@ release or security certification.
 
 ## Questions and reports
 
-Use [GitHub issues](https://github.com/lloydsmart/wii-netdisc/issues) for research
-questions, documentation problems and suggestions. Check existing issues first
-and include the relevant file, commit or source reference.
+Use the [issue chooser](https://github.com/lloydsmart/wii-netdisc/issues/new/choose)
+for research questions or findings and documentation problems. Check existing
+issues first and include the relevant file, commit or source reference. A blank
+issue is available for other repository questions or suggestions.
 
 Report suspected vulnerabilities privately using [SECURITY.md](SECURITY.md).
 For conduct concerns, use the private contact in the
