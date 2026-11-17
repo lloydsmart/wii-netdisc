@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.py text eol=lf
+# The local source archive must retain its original bytes.
+research/historical/wii-network-launcher-development.json -text

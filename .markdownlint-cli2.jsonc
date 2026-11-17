@@ -1,0 +1,8 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false
+  },
+  "globs": ["**/*.md", ".github/**/*.md"],
+  "ignores": ["research/local/**", ".tools/**", ".tool-cache/**"]
+}

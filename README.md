@@ -1,0 +1,62 @@
+# Wii NetDisc
+
+Wii NetDisc is a research-stage project exploring read-only streaming of Wii disc
+images over a wired network, with a runtime that could serve multiple frontends.
+
+**There is no implementation, supported build or verified hardware compatibility.**
+The historical discussion favours NBD and d2x, but their suitability and integration
+points still need source-level verification.
+
+## Start here
+
+- [Research plan and first milestone](research/feasibility-plan.md)
+- [Architecture boundaries](docs/architecture/README.md)
+- [Decision records](docs/decisions/README.md)
+- [Contributing and local checks](CONTRIBUTING.md)
+- [Instructions for coding agents](AGENTS.md)
+- [Repository conventions review and setup decisions](docs/repository-review.md)
+- [Historical archive provenance](research/historical/README.md)
+
+## Scope
+
+Investigate ISO-backed reads first, using an existing network protocol and suitable
+existing Wii frontends where practical. Direct WBFS support, discovery, caching and
+RetroMount integration are later possibilities, subject to evidence.
+
+RetroMount remains a network-independent format converter. Export publication and
+game selection belong outside it.
+
+The immediate deliverable is a feasibility report and a proposed architecture
+decision, not a loader, cIOS build or console installation.
+
+## Repository layout
+
+| Path | Purpose |
+| --- | --- |
+| `docs/architecture/` | Proposed boundaries and open design questions |
+| `docs/decisions/` | Decisions with explicit status and rationale |
+| `research/` | Research method, plan and future evidence-backed findings |
+| `research/historical/` | Provenance note; original conversation retained locally |
+| `scripts/` | Repository validation only |
+| `.github/` | Documentation/workflow checks and pull-request guidance |
+
+Application directories and build manifests will be introduced when an implementation
+task and its architecture have been approved.
+
+## Development workflow
+
+Use `develop` for integration and `main` for stable promotion, with short-lived topic
+branches. Bootstrap uses an approved, GPG-signed initial commit on main, with
+develop created from that commit. All commits must be signed with the owner's
+GPG key. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Licence
+
+Copyright (C) 2026 Lloyd Smart and contributors.
+
+Original Wii NetDisc contributions are licensed under the GNU General Public
+License, version 3 only: **SPDX-License-Identifier: GPL-3.0-only**.
+See [LICENSE](LICENSE) for the complete terms, including the warranty disclaimer.
+
+The historical conversation and any third-party material retain their own rights
+and notices. Their presence does not relicense them as Wii NetDisc code.

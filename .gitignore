@@ -1,0 +1,43 @@
+# Local OS/editor state
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+*.tmp
+
+# Local research and temporary validation tools
+/research/local/
+/.tools/
+/.tool-cache/
+/research/historical/wii-network-launcher-development.json
+
+# Private configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Console/disc payloads are not project source
+*.[iI][sS][oO]
+*.[wW][bB][fF][sS]
+*.[wW][aA][dD]
+*.[rR][vV][zZ]
+*.[wW][iI][aA]
+*.[cC][hH][dD]
+*.[dD][oO][lL]
+*.[eE][lL][fF]
+*.nand
+nand.bin
+keys.bin
+
+# Generated output and Python validator caches
+/build/
+/dist/
+/output/
+__pycache__/
+*.py[cod]
