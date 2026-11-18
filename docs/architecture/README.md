@@ -28,6 +28,8 @@ IOS modules. No API names or directory stubs are reserved yet.
 - Which NBD negotiation mode and read-only subset can interoperate with a standard server?
 - What latency and throughput are required, and how would they be measured?
 
-All remain open here. The repository setup did not inspect d2x, IOS or NBD source.
-The [research plan](../../research/feasibility-plan.md) defines the evidence needed
-before selecting DIP integration, a separate module or another approach.
+The [initial R0-01/R0-02 source investigation](../../research/r0-01-r0-02-source-investigation.md)
+maps candidate disc-read boundaries and IOS socket clients, with lifecycle and
+privilege gaps still open. NBD has not been investigated. The
+[research plan](../../research/feasibility-plan.md) defines the remaining evidence
+needed before selecting DIP integration, a separate module or another approach.
