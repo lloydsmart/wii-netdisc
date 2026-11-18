@@ -1,6 +1,11 @@
 # Feasibility plan
 
-Status: **planned; source investigation has not been performed**.
+Status: **in progress; initial R0-01/R0-02 source investigation recorded**.
+
+See the [disc-read and IOS networking note](r0-01-r0-02-source-investigation.md)
+for pinned sources, findings and remaining gaps. Networking lifecycle/privileges
+and the original IOS encrypted-read internals remain unresolved; R0-03 through
+R0-06 and the milestone exit criteria are not complete.
 
 ## Objective
 
