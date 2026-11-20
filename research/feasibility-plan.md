@@ -1,11 +1,12 @@
 # Feasibility plan
 
-Status: **in progress; initial R0-01/R0-02 source investigation recorded**.
+Status: **in progress**.
 
 See the [disc-read and IOS networking note](r0-01-r0-02-source-investigation.md)
-for pinned sources, findings and remaining gaps. Networking lifecycle/privileges
-and the original IOS encrypted-read internals remain unresolved; R0-03 through
-R0-06 and the milestone exit criteria are not complete.
+for the R0-01 read path. The [IOS57 v5918 wired TCP lifecycle note](r0-02-r0-03-ios57-v5918-network-lifecycle.md)
+traces the GX cleanup helper and game-side cleanup and compares both R0-02/R0-03 connection owners.
+Neither owner's access after handoff is verified. The original IOS encrypted-read
+internals, the transport placement decision and the R0 exit criteria remain open.
 
 ## Objective
 
