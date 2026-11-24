@@ -7,7 +7,9 @@
 Wii NetDisc is a research-stage project exploring read-only streaming of Wii disc
 images over a wired network, with a runtime that could serve multiple frontends.
 
-**There is no implementation, supported build or verified hardware compatibility.**
+**There is no Wii runtime implementation, supported build or verified hardware compatibility.**
+The [PC-only TCP experiment](research/tcp_peer/README.md) exercises the test
+peer and a simulated client using synthetic data on loopback.
 The historical discussion favours NBD and d2x, but their suitability and integration
 points still need source-level verification.
 
@@ -43,6 +45,8 @@ decision, not a loader, cIOS build or console installation.
 | `docs/decisions/` | Decisions with explicit status and rationale |
 | `research/` | Research method, plan and future evidence-backed findings |
 | `research/historical/` | Provenance note; original conversation retained locally |
+| `research/tcp_peer/` | PC-only diagnostic peer and simulated client |
+| `tests/` | Automated PC loopback experiments |
 | `scripts/` | Repository validation only |
 | `.github/` | Documentation/workflow checks and pull-request guidance |
 
