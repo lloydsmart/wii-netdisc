@@ -28,6 +28,14 @@ jobs:
       - name: Check repository hygiene
         run: python3 scripts/check-repository.py
 
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Test PC TCP diagnostic peer
+        run: timeout 30s python3 -B -m unittest discover -s tests -p 'test_tcp_peer.py' -v
+
       - name: Lint Markdown
         uses: DavidAnson/markdownlint-cli2-action@696eb3f2509270d7b882d2aa68347bc676e7af34 # v25.0.0
 

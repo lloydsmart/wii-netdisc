@@ -45,6 +45,7 @@ Run from the repository root:
 
 ```sh
 python3 scripts/check-repository.py
+timeout 30s python3 -B -m unittest discover -s tests -p 'test_tcp_peer.py' -v
 markdownlint-cli2
 actionlint
 ```
@@ -71,8 +72,8 @@ manual run does not verify the automatic push or pull-request triggers.
 
 There are no path filters, write token permissions, deployment steps or hardware
 access. Both long-lived branches require an up-to-date `Repository checks` result
-from GitHub Actions before merging. This is a documentation baseline, not a
-release or security certification.
+from GitHub Actions before merging. The PC diagnostic tests run on loopback
+with Python 3.12 and a 30-second watchdog.
 
 ## Questions and reports
 
