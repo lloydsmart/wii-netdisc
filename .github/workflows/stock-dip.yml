@@ -1,0 +1,99 @@
+name: Stock DIP measurement
+
+on:
+  workflow_dispatch:
+    inputs:
+      approved_sha:
+        description: Full reviewed commit SHA approved for this execution
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Verify owner dispatch and workflow revision
+        env:
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: |
+          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]
+          [[ "$GITHUB_REPOSITORY" == lloydsmart/wii-netdisc ]]
+          [[ "$GITHUB_ACTOR" == lloydsmart && "$GITHUB_TRIGGERING_ACTOR" == lloydsmart ]]
+          [[ "$GITHUB_RUN_ATTEMPT" == 1 && "$GITHUB_REF" == refs/heads/develop ]]
+          [[ "$GITHUB_WORKFLOW_REF" == "$GITHUB_REPOSITORY/.github/workflows/stock-dip.yml@$GITHUB_REF" ]]
+          [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_SHA" == "$APPROVED_SHA" && "$GITHUB_WORKFLOW_SHA" == "$APPROVED_SHA" ]]
+          echo "Approved workflow and event revision $APPROVED_SHA"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        timeout-minutes: 3
+        with:
+          ref: ${{ inputs.approved_sha }}
+          persist-credentials: false
+
+      - name: Verify checkout
+        id: approved_checkout
+        env:
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: test "$(git rev-parse HEAD)" = "$APPROVED_SHA"
+
+      - name: Record runner and measurement revision
+        run: |
+          mkdir "$RUNNER_TEMP/stock-inputs"
+          {
+            git rev-parse HEAD
+            printf 'ImageOS=%s\nImageVersion=%s\nRun=%s/%s/actions/runs/%s (attempt %s)\n' \
+              "$ImageOS" "$ImageVersion" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" \
+              "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            cat /etc/os-release
+            uname -a
+            id
+          } | tee "$RUNNER_TEMP/stock-inputs/runner.txt"
+
+      - name: Provision native build and r32 runtime dependencies
+        timeout-minutes: 7
+        run: |
+          sudo apt-get -o Acquire::Retries=2 update
+          sudo apt-get install -y --no-install-recommends \
+            g++ make binutils libfl2 libelf1t64 libmpc3 libmpfr6 libgmp10 zlib1g
+
+      - name: Retrieve pinned public inputs
+        timeout-minutes: 5
+        run: |
+          cd "$RUNNER_TEMP/stock-inputs"
+          git init -q d2x
+          git -C d2x fetch --depth=1 --no-tags https://github.com/wiidev/d2x-cios.git \
+            33ad1eeeb8f562df99e7d7ca428fdd36e0e31be7
+          release=https://github.com/Leseratte10/compile-devkitARM-r32/releases/download/2020-02-20
+          curl -fLsS --retry 2 --connect-timeout 15 --max-time 90 \
+            "$release/devkitARM-r32-linux_debian-buster.tar.gz" -o r32.tar.gz
+
+      - name: Build and measure stock DIP twice
+        timeout-minutes: 15
+        run: |
+          D2X_REPO="$RUNNER_TEMP/stock-inputs/d2x" R32_ARCHIVE="$RUNNER_TEMP/stock-inputs/r32.tar.gz" \
+            WORK_DIR="$RUNNER_TEMP/stock-dip" make stock-dip-baseline \
+            2>&1 | tee "$RUNNER_TEMP/stock-inputs/measurement.txt"
+
+      - name: Select validated text evidence
+        id: collect
+        if: ${{ !cancelled() && steps.approved_checkout.outcome == 'success' }}
+        run: python3 -B -m scripts.stock_dip_evidence "$RUNNER_TEMP"
+
+      - name: Retain text evidence
+        if: ${{ !cancelled() && steps.collect.outputs.ready == 'true' }}
+        timeout-minutes: 4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: stock-dip-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 30
+          if-no-files-found: error
+          path: ${{ runner.temp }}/stock-dip-public/

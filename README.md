@@ -16,6 +16,7 @@ points still need source-level verification.
 ## Start here
 
 - [Research plan and first milestone](research/feasibility-plan.md)
+- [Stock DIP build and footprint measurement](research/d2x-build-baseline.md#run-the-stock-measurement)
 - [Architecture boundaries](docs/architecture/README.md)
 - [Decision records](docs/decisions/README.md)
 - [Contributing and local checks](CONTRIBUTING.md)
@@ -46,12 +47,12 @@ decision, not a loader, cIOS build or console installation.
 | `research/` | Research method, plan and future evidence-backed findings |
 | `research/historical/` | Provenance note; original conversation retained locally |
 | `research/tcp_peer/` | PC-only diagnostic peer and simulated client |
-| `tests/` | Automated PC loopback experiments |
-| `scripts/` | Repository validation only |
-| `.github/` | Documentation/workflow checks and pull-request guidance |
+| `tests/` | PC loopback experiments and stock measurement checks |
+| `scripts/` | Repository validation and stock DIP measurement |
+| `.github/` | Repository checks, stock DIP research workflow and pull-request guidance |
 
-Application directories and build manifests will be introduced when an implementation
-task and its architecture have been approved.
+The Make target covers the stock DIP research build authorised by
+[ADR 0003](docs/decisions/0003-stock-dip-build-strategy.md).
 
 ## Development workflow
 

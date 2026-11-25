@@ -15,6 +15,98 @@ selects Make and a GitHub-hosted runner as the preferred approach, superseding
 the container recipe below. The recipe and pending-decision wording record the
 blocked 24 November attempt. The ADR sets the conditions for a subsequent run.
 
+## Run the stock measurement
+
+From the Wii NetDisc repository root, use a normal x86-64 Linux account and
+an independently provisioned Buster devkitARM r32 installation. The shared
+target needs Python 3.11+, Git, GNU Make 4+, native g++, GNU tar, diffutils,
+binutils, glibc/ldd and the host libraries listed below. On Ubuntu 24.04 the
+runtime packages are libfl2, libelf1t64, libmpc3, libmpfr6, libgmp10 and zlib1g.
+Use absolute paths and a toolchain path without whitespace (upstream Makefile
+constraint). The original release archive serves as the installation reference.
+
+```sh
+set -eu
+scratch=$(mktemp -d /tmp/stock-dip.XXXXXXXX)
+git init -q "$scratch/d2x"
+git -C "$scratch/d2x" fetch --depth=1 --no-tags https://github.com/wiidev/d2x-cios.git \
+  33ad1eeeb8f562df99e7d7ca428fdd36e0e31be7
+release=https://github.com/Leseratte10/compile-devkitARM-r32/releases/download/2020-02-20
+curl -fLsS "$release/devkitARM-r32-linux_debian-buster.tar.gz" -o "$scratch/r32.tar.gz"
+DEVKITARM=/opt/devkitARM D2X_REPO="$scratch/d2x" R32_ARCHIVE="$scratch/r32.tar.gz" \
+  WORK_DIR="$scratch/measurement" make stock-dip-baseline
+```
+
+Point `DEVKITARM` at the existing installation. The target generates the selected
+source tar from the pinned Git object in `D2X_REPO`, checks the tree, epoch and
+both archive hashes, then extracts r32 in scratch. It compares the installation
+to those verified files before invoking any r32 program. With `DEVKITARM`
+unset, the hosted runner uses that private extraction directly. `WORK_DIR`
+must be a fresh path outside the input trees and Wii NetDisc, with an existing
+parent. Supply the root of the upstream worktree as `D2X_REPO`. The target
+resolves symlinks and checks the worktree and Git directories before creating
+output. It checks executable permissions and shared libraries for gcc, cc1,
+collect2 and the required binutils. The driver's resolved cc1, collect2,
+assembler and linker paths must identify executable files in the verified tree. A mismatch stops preparation. Use the recorded Git 2.43.0 archive as
+the reference when investigating a source tar mismatch.
+
+Both fresh builds retain their binaries in scratch. Each original ELF is
+checked against its map and load segments independently of the byte comparison.
+The occupied span ends at the highest nonempty allocated section in the
+executable region. The check reconciles nonempty map outputs with ELF sections,
+including non-allocated sections, and checks the placement of the stock sections
+against [the pinned linker script][layout]. Memory-only BSS must reside in RAM
+and be clear of file-backed load bytes. A segment can include padding between
+sections. An unexplained load extent in the proposed headroom or a contradictory
+map entry fails measurement before the report gives a headroom figure. Actual
+r32 section placement and map formatting await the approved build.
+Review `WORK_DIR/evidence/result.txt`, the two footprint reports, maps, ELF
+listings, build logs, sorted path inventories, sizes, SHA-256 hashes and the
+comparison log. Preparation records the tool versions, resolved shared libraries
+and, on Debian-family systems, installed package versions. A partial run can
+leave partial evidence. A nonzero Make exit requires inspection of the logs.
+The paired builds measure repeatability within the recorded environment.
+Any trailing executable space is a linker measurement. DI caller stack, heap,
+IPC permissions and runtime behaviour still require independent evidence.
+
+To check the measurement logic with synthetic data, run
+`python3 -B -m unittest discover -s tests -p 'test_stock_dip.py' -v`.
+
+### Hosted initiation and evidence
+
+The remote's default branch was verified as `develop` on 25 November 2026.
+GitHub requires the manually dispatched workflow to exist on the default
+branch. The first run therefore requires a separately reviewed and authorised
+merge of the [measurement workflow](../.github/workflows/stock-dip.yml) to
+`develop`. PR events, pushes and the merge itself do not start compilation.
+[GitHub dispatch event](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch)
+
+For each separately authorised execution, the owner reviews the exact current
+`develop` commit, including the workflow and its build and publication scripts.
+Select **Run workflow** on `develop` and enter that commit's full lowercase
+40-digit SHA in `approved_sha`. The job checks the repository, owner, event,
+branch, first attempt, workflow path, workflow commit and event commit before
+checkout. It checks the detached checkout against the same input before
+provisioning. A moved branch requires review of the new tip and a fresh
+dispatch. For a subsequent attempt at the same tip, dispatch again with its
+approved SHA. GitHub reruns increment the attempt counter and fail the gate.
+[GitHub workflow variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)
+
+These checks rely on GitHub's event metadata, control of the owner's account
+and review of code accepted on `develop`. Someone able to replace that
+workflow can also replace its checks. This procedure requires no approval
+variable, environment or change of repository settings.
+
+The hosted Ubuntu 24.04 runner retains provisioning diagnostics in the job log.
+On success or failure after checkout verification, a collector selects only the
+named runner, preparation, build, inventory, comparison and measurement reports.
+It checks the actual bytes for printable UTF-8 text and permitted whitespace,
+and checks maps against the original ELF again. A rejected file fails collection
+while valid diagnostics remain eligible. Only the collector's fresh directory
+is uploaded as `stock-dip-evidence` (run ID and attempt) for 30 days. Original
+inputs and compiled artifacts stay in runner scratch.
+Review and record experimental numbers here following an approved run.
+
 ## Inputs inspected on the PC
 
 | Experimentally verified input | Identity |
