@@ -28,7 +28,10 @@ no-go result or a different architecture.
 
 Read the historical archive first for intent, then independently inspect primary
 sources. Pin exact revisions and record links; old chat citations are leads only.
-Do not execute upstream build scripts as part of this milestone.
+Upstream build scripts remain outside R0 except for the two PC-only stock DIP
+builds scoped by [ADR 0003](../docs/decisions/0003-stock-dip-build-strategy.md).
+That task may supply measurements for R0-03 and R0-05 after review and merge
+of the decision and separate approval for runner execution.
 
 ### Exit criteria
 

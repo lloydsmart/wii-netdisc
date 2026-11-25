@@ -10,6 +10,11 @@ restrictions. There were no compiler, linker or stripios diagnostics. Neither
 clean build ran, so there are no output sizes, hashes or reproducibility result.
 The [IOS57 experiment plan](ios57-baseline-plan.md) remains at its build gate.
 
+**25 November 2026 update.** [ADR 0003](../docs/decisions/0003-stock-dip-build-strategy.md)
+selects Make and a GitHub-hosted runner as the preferred approach, superseding
+the container recipe below. The recipe and pending-decision wording record the
+blocked 24 November attempt. The ADR sets the conditions for a subsequent run.
+
 ## Inputs inspected on the PC
 
 | Experimentally verified input | Identity |

@@ -11,6 +11,7 @@ Acceptance records an explicit owner decision, not an agent's confidence.
 | --- | --- | --- |
 | [0001](0001-research-first.md) | Accepted | Research scope and evidence gate |
 | [0002](0002-repository-workflow.md) | Accepted | GPL-3.0-only and develop/main workflow |
+| [0003](0003-stock-dip-build-strategy.md) | Accepted | Make interface and PC-only stock DIP measurement |
 
 Technical architecture is still proposed. Create a new ADR when the feasibility
 research can support a concrete decision.
