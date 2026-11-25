@@ -1,5 +1,100 @@
 # Unmodified d2x DIP build baseline for IOS57 v5918
 
+## Hosted measurement, 25 November 2026
+
+**Experimentally verified (R0-03 / R0-05).** Both fresh stock builds compiled,
+linked and converted successfully. Both footprint measurements passed. Stock DIP
+occupies **6,708 of 8,192 executable bytes**, leaving **1,484 contiguous bytes**.
+Full-artifact repeatability failed on one static library; the workflow correctly
+returned failure. [Run 45613302561, attempt 1][run] · [Retained evidence][evidence]
+
+### Run identity and build environment
+
+The owner dispatched the workflow on `develop` at Wii NetDisc commit
+`a1a9c717c6b4b72ae48ea56c47439cede7939e74` (PR #12 merge).
+Both extractions used public d2x commit `33ad1eeeb8f562df99e7d7ca428fdd36e0e31be7`,
+tree `b8e661b6535beb1d777ac21d25d25623bb5f0668`, committer epoch `1742677801`.
+The selected 327,680-byte source tar had SHA-256
+`b6c8bd6cbe179a7155879fa3eace86af475fe80146b7bab9f2647f6f2303575c`.
+The 35,805,906-byte Buster r32 archive had SHA-256
+`7ca6fafef13876e2e565b4421e2d240c4532c7f0d15f4ffe1e2ed3c485748cd6`.
+
+The x86-64 Ubuntu 24.04.5 LTS runner used image `20261116.133.1`, kernel
+`7.0.0-1014-aws`, uid 1001, native g++ 13.3.0, GNU Make 4.3, Git 2.56.1
+and Python 3.12.3. The r32 driver resolved cc1, collect2, as and ld within
+the verified toolchain. ARM GCC 4.5.1 and GNU binutils 2.20.1.20100303 ran
+successfully. Both build logs record native stripios, the cios-lib archive,
+the DIP link and stripios writing the table, executable and RAM file payloads
+(52, 6,708 and 828 bytes). The upload step emitted Node deprecation warnings
+and successfully retained 17 text files. The downloaded artifact ZIP
+(ID `15020234721`, 39,382 bytes) independently matched the upload log's SHA-256
+`b18b2b8b4c77951563d78bc727945dc3f6d13418a0d2dfdbc835986ca6223cec`. [Workflow log][run] · [Build, dependency and runner records][evidence]
+
+### Original DIP ELF footprint
+
+The two footprint reports agree byte for byte. The ELF listings identify an
+ELF32 big-endian ARM EABI v5 executable with entry point `0x13800000`.
+The linker maps and original ELF listings give the following half-open ranges.
+
+| Allocated section | Start | Exclusive end | Bytes | Alignment (bytes) |
+| --- | ---: | ---: | ---: | ---: |
+| `.ios_info_table` | `0x00000000` | `0x00000034` | 52 | 1 |
+| `.init` | `0x13800000` | `0x13800014` | 20 | 4 |
+| `.text` | `0x13800020` | `0x13801a34` | 6,676 | 16 |
+| `.data` | `0x13802000` | `0x13802160` | 352 | 32 |
+| `.rodata` | `0x13802160` | `0x1380233c` | 476 | 4 |
+| `.bss` (NOBITS) | `0x13802340` | `0x1383e480` | 246,080 | 32 |
+
+The executable LOAD starts at physical and virtual address `0x13800000`.
+Its file and memory sizes both equal 6,708 bytes, including the 12-byte gap
+before `.text`. Subtracting the exclusive end `0x13801a34` from the region
+limit `0x13802000` gives the 1,484-byte trailing budget.
+
+The RAM LOAD starts at physical and virtual address `0x13802000`. It has
+828 file-backed bytes, a four-byte alignment gap and 246,080 bytes of
+memory-only BSS. Its **246,912-byte static span** leaves **15,232 bytes**
+between the BSS end and the linker limit `0x13842000`. Runtime heap capacity
+and stack space on the hooked DI caller remain unknown. [Maps, ELF listings and footprint reports][evidence]
+
+### Same-run artifact comparison
+
+The two sorted inventories contain the same 39 paths. The byte comparisons
+and the recorded size/hash pairs agree: all 34 objects and the four common
+outputs below matched. Only `cios-lib.a` differed. Both retained map files
+also independently hash to the recorded map digest.
+
+| Output | Bytes | SHA-256 (both builds unless labelled) |
+| --- | ---: | --- |
+| `cios-lib.a` (build A) | 68,818 | `66026974f17a7e3efe8ab6f31cb66d7ced05b4b8ce399501747d094ba04dc780` |
+| `dip-plugin.elf` | 7,800 | `2ea1593075912a31a2461c1fef4a1405fd7ae27ad46a052738753dcf1b3e8ca7` |
+| `dip-plugin.elf.orig` | 84,587 | `70623d5af228957d031691e32229b47e5bdc0b950e158d795daaba1125b7e63f` |
+| `dip-plugin.map` | 26,392 | `2edd3b7e30bfef7d4e766222d8c67c681771d4db89101971c83029f9b5c5a1ff` |
+| `stripios` | 20,872 | `33646da67e8d5efd558544f759367c3421762d3cb9ab0ab552dbaaf21cb8c97e` |
+| `cios-lib.a` (build B) | 68,818 | `7420ff03ff89eda72163b7d926ec6e6a50314acaf0751cf2b5b98f2ee0226521` |
+
+**Unresolved discrepancy.** Archive metadata is a plausible source of the
+differing bytes. The retained evidence contains hashes, sizes and build logs;
+it lacks archive bytes or member headers needed to establish the cause.
+The matching ELFs establish same-environment output agreement for this pair.
+Cross-environment reproducibility remains open. [Comparison and full hash inventories][evidence]
+
+### Next direct-DIP investigation
+
+Use a source-only fit study for the one-shot TCP exchange in the
+[IOS57 probe plan](ios57-baseline-plan.md). Trace the minimum socket IPC,
+alignment, timeout, cleanup and result-reporting paths. Use the stock map and
+symbol listing to separate retained helpers that could be reused from code
+that would need linking. Charge new call stubs, interworking glue and padding
+against the **1,484-byte** executable budget and record RAM and caller-stack
+needs separately. This gives a basis for deciding whether to propose a
+separately authorised PC-only link-size experiment. Probe fit, IPC permissions,
+bounded execution and IOS57 runtime feasibility remain unverified.
+
+[run]: https://github.com/lloydsmart/wii-netdisc/actions/runs/45613302561
+[evidence]: https://github.com/lloydsmart/wii-netdisc/actions/runs/45613302561/artifacts/15020234721
+
+## Historical blocked attempt, 24 November 2026
+
 **R0-03 / R0-05, 24 November 2026. Build blocked before compilation.**
 The pinned linker script gives DIP 8,192 bytes for executable code. The number
 of bytes available to the proposed probe remains **unmeasured**. The PC run
@@ -105,7 +200,7 @@ and checks maps against the original ELF again. A rejected file fails collection
 while valid diagnostics remain eligible. Only the collector's fresh directory
 is uploaded as `stock-dip-evidence` (run ID and attempt) for 30 days. Original
 inputs and compiled artifacts stay in runner scratch.
-Review and record experimental numbers here following an approved run.
+The 25 November results above record the first approved run.
 
 ## Inputs inspected on the PC
 
@@ -168,7 +263,7 @@ The [earlier source investigation](r0-01-r0-02-source-investigation.md)
 records the mixed per-file provenance of DIP and cios-lib. The native stripios
 source carries a GPL-2.0-or-later notice. Only findings are included here.
 
-## Executable and data budget
+## Source-derived executable and data budget, before compilation
 
 **Source-verified.** Ranges below are half-open. The linker aligns the end of
 each named code and RAM output section to four bytes. Input alignment can
@@ -325,7 +420,7 @@ BUILD
 CONTAINER
 ```
 
-## Implication and next task
+## Historical implication and proposed next task, 24 November 2026
 
 **Hypothesis still open.** The 8 KiB executable limit sets a ceiling for the
 existing DIP and any added code together. Until the stock link is measured,
