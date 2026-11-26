@@ -33,6 +33,11 @@ builds scoped by [ADR 0003](../docs/decisions/0003-stock-dip-build-strategy.md).
 That task may supply measurements for R0-03 and R0-05 after review and merge
 of the decision and separate approval for runner execution.
 
+After review and merge of [ADR 0004](../docs/decisions/0004-pc-only-fixture-simulation.md),
+a separate PC-only simulation may test fixture ownership, deadlines, arming and
+observation under injected events for R0-06. Its evidence covers only the
+modelled transitions. R0 remains open and a modified DIP link remains deferred.
+
 ### Exit criteria
 
 - A written source map and claim ledger covering R0-01 through R0-06.
