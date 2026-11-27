@@ -1,9 +1,10 @@
 # Experimental direct-DIP sizing
 
-**PC-only sizing implementation, awaiting independent verification and separate execution approval.**
-This is the PC-only link experiment selected by [ADR 0005](../../docs/decisions/0005-experimental-dip-sizing-link.md).
-Its control is the [measured stock DIP](../d2x-build-baseline.md). R0 remains
-open. The hardware recovery gate is closed.
+The first owner-approved PC-only run matched the [stock DIP](../d2x-build-baseline.md)
+and measured a **3,936-byte executable overflow** for the complete probe.
+R0 remains open. The hardware recovery gate is closed.
+[Experimental DIP sizing results](../experimental-dip-sizing-results.md) ·
+[ADR 0005](../../docs/decisions/0005-experimental-dip-sizing-link.md)
 
 ## Entry and fixture contract
 
