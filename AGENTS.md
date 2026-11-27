@@ -11,13 +11,19 @@ application code, dummy source trees, build stubs or speculative API constants.
 Do not install devkitPro, cIOS, Wii software or system toolchains, and do not access
 or modify a console. Implementation and hardware testing need a separate task.
 
-The sole stock DIP compilation exception is the PC-only task scoped by
+The standalone stock DIP measurement is the PC-only task scoped by
 [ADR 0003](docs/decisions/0003-stock-dip-build-strategy.md). It takes effect after review
 and merge of that record. Runner operations require separate execution approval.
 
 After review and merge of [ADR 0004](docs/decisions/0004-pc-only-fixture-simulation.md),
 a separate PC-only task may implement its deterministic fixture model, focused
 standard-library tests, minimal documentation and integration into existing CI.
+
+After independent review and merge of [ADR 0005](docs/decisions/0005-experimental-dip-sizing-link.md),
+a separate PC-only task may implement the complete experimental direct-DIP probe
+and its sizing workflow. Compiling the matched stock control and modified link
+requires separate owner execution approval for the exact reviewed commit.
+The hardware recovery gate remains closed.
 
 ## Evidence and architecture
 
