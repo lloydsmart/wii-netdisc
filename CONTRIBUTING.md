@@ -46,6 +46,7 @@ Run from the repository root:
 ```sh
 python3 scripts/check-repository.py
 timeout 30s python3 -B -m unittest discover -s tests -p 'test_tcp_peer.py' -v
+timeout 30s python3 -B -m unittest discover -s tests -p 'test_fixture_sim.py' -v
 markdownlint-cli2
 actionlint
 ```
@@ -72,8 +73,10 @@ manual run does not verify the automatic push or pull-request triggers.
 
 There are no path filters, write token permissions, deployment steps or hardware
 access. Both long-lived branches require an up-to-date `Repository checks` result
-from GitHub Actions before merging. The PC diagnostic tests run on loopback
-with Python 3.12 and a 30-second watchdog.
+from GitHub Actions before merging. The TCP peer tests use loopback. The
+deterministic fixture suite uses synthetic events and explicit clock samples.
+Each suite runs on Python 3.12 with its own 30-second watchdog.
+[Fixture assumptions and test coverage](research/fixture_sim/README.md)
 
 ## Questions and reports
 
