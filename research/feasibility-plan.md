@@ -44,9 +44,10 @@ The corroborated 3,936-byte overflow stops this design at link time.
 Modified static RAM fit and runtime feasibility remain open.
 [Experimental DIP sizing results](experimental-dip-sizing-results.md)
 
-Investigate separate IOS service placement next, including the DIP-side IPC
-footprint, service permissions and cost of waiting for a bounded reply.
-Architecture selection and implementation require a separate decision.
+The [separate IOS service placement study](separate-ios-service-placement.md)
+identifies an MLOAD-started worker as a candidate for R0-02/03/05/06.
+Exclusive memory, caller permissions and bounded handback remain open.
+It proposes measuring the DIP adapter first, subject to a separate decision.
 R0 remains open and the hardware recovery gate remains closed. Upstream build
 scripts remain outside R0 except for the measurements scoped by ADRs 0003 and 0005.
 
