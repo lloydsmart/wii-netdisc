@@ -36,13 +36,19 @@ The merged [ADR 0004 fixture simulation](fixture_sim/README.md) tested ownership
 deadlines, arming and observation under injected events for R0-06. Its evidence
 covers only the modelled transitions.
 
-[ADR 0005](../docs/decisions/0005-experimental-dip-sizing-link.md) selects a
-matched stock control and one complete outer-hook TCP probe link to measure
-static fit for R0-03. Implementation requires independent review and merge of
-the ADR and a separate task. Compilation requires separate owner approval of
-the exact reviewed commit. A documented no-fit is a valid outcome. R0 remains
-open and the hardware recovery gate remains closed. Upstream build scripts
-remain outside R0 except for the measurements scoped by ADRs 0003 and 0005.
+**Experimentally verified (R0-03, 27 November 2026).** The first owner-approved
+PC sizing run under [ADR 0005](../docs/decisions/0005-experimental-dip-sizing-link.md)
+matched the historical stock control. The complete outer-hook TCP probe
+attempted to occupy 12,128 bytes of the 8,192-byte executable region.
+The corroborated 3,936-byte overflow stops this design at link time.
+Modified static RAM fit and runtime feasibility remain open.
+[Experimental DIP sizing results](experimental-dip-sizing-results.md)
+
+Investigate separate IOS service placement next, including the DIP-side IPC
+footprint, service permissions and cost of waiting for a bounded reply.
+Architecture selection and implementation require a separate decision.
+R0 remains open and the hardware recovery gate remains closed. Upstream build
+scripts remain outside R0 except for the measurements scoped by ADRs 0003 and 0005.
 
 ### Exit criteria
 
