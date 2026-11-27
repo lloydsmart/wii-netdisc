@@ -28,15 +28,21 @@ no-go result or a different architecture.
 
 Read the historical archive first for intent, then independently inspect primary
 sources. Pin exact revisions and record links; old chat citations are leads only.
-Upstream build scripts remain outside R0 except for the two PC-only stock DIP
-builds scoped by [ADR 0003](../docs/decisions/0003-stock-dip-build-strategy.md).
-That task may supply measurements for R0-03 and R0-05 after review and merge
-of the decision and separate approval for runner execution.
+The two PC-only stock DIP builds under [ADR 0003](../docs/decisions/0003-stock-dip-build-strategy.md)
+measured 1,484 bytes of contiguous executable headroom for R0-03 and R0-05.
+[Stock footprint and repeatability results](d2x-build-baseline.md)
 
-After review and merge of [ADR 0004](../docs/decisions/0004-pc-only-fixture-simulation.md),
-a separate PC-only simulation may test fixture ownership, deadlines, arming and
-observation under injected events for R0-06. Its evidence covers only the
-modelled transitions. R0 remains open and a modified DIP link remains deferred.
+The merged [ADR 0004 fixture simulation](fixture_sim/README.md) tested ownership,
+deadlines, arming and observation under injected events for R0-06. Its evidence
+covers only the modelled transitions.
+
+[ADR 0005](../docs/decisions/0005-experimental-dip-sizing-link.md) selects a
+matched stock control and one complete outer-hook TCP probe link to measure
+static fit for R0-03. Implementation requires independent review and merge of
+the ADR and a separate task. Compilation requires separate owner approval of
+the exact reviewed commit. A documented no-fit is a valid outcome. R0 remains
+open and the hardware recovery gate remains closed. Upstream build scripts
+remain outside R0 except for the measurements scoped by ADRs 0003 and 0005.
 
 ### Exit criteria
 
