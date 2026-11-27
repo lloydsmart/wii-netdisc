@@ -107,6 +107,11 @@ def check_programs(toolchain, env, log):
 def build(root, inputs, env, log):
     options = {"env": env, "cwd": root}
     command(["tar", "-xf", inputs], log, **options)
+    compile_extraction(root, env, log)
+
+
+def compile_extraction(root, env, log):
+    options = {"env": env, "cwd": root}
     command(["g++", "stripios_src/main.cpp", "-o", "stripios"], log, **options)
     command(["make", "--trace", "-C", "source/cios-lib"], log, **options)
     command(["make", "--trace", "-C", "source/dip-plugin", "STRIP=../../stripios"], log, **options)

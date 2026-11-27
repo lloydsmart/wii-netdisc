@@ -46,12 +46,14 @@ does not establish a private IOS57 ABI. [d2x commands][commands] ·
 1. Stage a fresh eight-byte tag and 16-byte challenge through a separate local
    arm request. Validate its version, instance, slot, builds, DI-side fd,
    intended unencrypted read command, byte length, word offset and aligned
-   exclusive output allocation and extent. Copy the inputs and return a
-   correlated arm receipt. Retain the observed output identity between calls.
+   exclusive output allocation and extent. Check the arm input against its
+   independently established reservation before synchronizing and copying it.
+   Return a correlated arm receipt and retain the validated allocation identities.
    Use only the validated live buffer for writes. Target address translation
    and preservation of the discriminators require evidence.
 2. Dispatch depends on a matching receipt, safe arm handback and evidence that
-   at least one discriminator (tag or exclusive output identity) survives.
+   at least one reserved allocation identity (read input or output) survives
+   to the outer hook. GX must withhold dispatch without that evidence.
    An uncertain receipt ends dispatch. At the outer hook, ordinary traffic takes
    the stock path and preserves the arm. For a recognisable attempt, check the
    complete 32-byte read input and bound tuple and spend the arm in one
@@ -61,6 +63,23 @@ does not establish a private IOS57 ABI. [d2x commands][commands] ·
 3. Publish separate arm, rejection and caller-entry evidence. Record the actual
    executing TID, hook, tag, instance, slot and build identity before the first
    network submission. [GX read][gxread] · [Fixture ownership and admission](../../research/ios-ipc-ownership-and-fixture.md)
+
+**Owner-approved clarification, 27 November 2026 (PC sizing fixture).**
+Reserve exclusive whole cache lines for arm and synthetic-read input. Establish
+their physical bounds independently before arm and keep them reserved through
+IPC handback and the applicable recovery boundary. An input starting inside a
+reserved extent identifies a candidate even if its length or tag is malformed.
+Synchronize only complete owned lines covering a validated input span. A valid
+read requires the read reservation, complete bound tuple, tag and bound output.
+Bound output with foreign input spends the read and rejects without accessing
+that input. With neither identity, ordinary traffic follows stock dispatch.
+A tag in foreign storage cannot identify a fixture request.
+
+The native fixture provisions the arm and read bounds separately before either
+ioctl. This represents ownership for sizing. GX allocation, translation into
+the IOS57 hook's address domain, alias exclusion, lifetime and coherence still
+require target evidence. This refinement follows the completed ADR 0004
+simulation, whose results cover its earlier modelled contract.
 
 ## IPC ownership and the measured network path
 

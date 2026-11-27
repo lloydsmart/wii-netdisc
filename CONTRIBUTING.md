@@ -47,6 +47,9 @@ Run from the repository root:
 python3 scripts/check-repository.py
 timeout 30s python3 -B -m unittest discover -s tests -p 'test_tcp_peer.py' -v
 timeout 30s python3 -B -m unittest discover -s tests -p 'test_fixture_sim.py' -v
+timeout 30s python3 -B -m unittest discover -s tests -p 'test_stock_dip.py' -v
+timeout 30s python3 -B -m unittest discover -s tests -p 'test_experimental_dip.py' -v
+timeout 30s python3 -B -m unittest discover -s tests -p 'test_native_dip.py' -v
 markdownlint-cli2
 actionlint
 ```
@@ -75,7 +78,8 @@ There are no path filters, write token permissions, deployment steps or hardware
 access. Both long-lived branches require an up-to-date `Repository checks` result
 from GitHub Actions before merging. The TCP peer tests use loopback. The
 deterministic fixture suite uses synthetic events and explicit clock samples.
-Each suite runs on Python 3.12 with its own 30-second watchdog.
+The native probe fixtures use the host GCC and Linux i386 process ABI with
+synthetic IOS calls. CI allows 30 seconds for the combined sizing tests.
 [Fixture assumptions and test coverage](research/fixture_sim/README.md)
 
 ## Questions and reports

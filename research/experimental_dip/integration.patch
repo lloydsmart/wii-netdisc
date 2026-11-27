@@ -1,0 +1,14 @@
+--- a/source/dip-plugin/Makefile
++++ b/source/dip-plugin/Makefile
+@@ -41,0 +42 @@
++		netdisc.o netdisc_gate.o netdisc_net.o \
+--- a/source/dip-plugin/plugin.c
++++ b/source/dip-plugin/plugin.c
+@@ -27,0 +28 @@
++#include "netdisc.h"
+@@ -681 +682,4 @@
+-	s32 ret = 1;
++	s32 ret = nd_hook(buffer, fd);
++	if (ret)
++		return ret;
++	ret = 1;
