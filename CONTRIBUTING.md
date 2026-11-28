@@ -50,6 +50,7 @@ timeout 30s python3 -B -m unittest discover -s tests -p 'test_fixture_sim.py' -v
 timeout 30s python3 -B -m unittest discover -s tests -p 'test_stock_dip.py' -v
 timeout 30s python3 -B -m unittest discover -s tests -p 'test_experimental_dip.py' -v
 timeout 30s python3 -B -m unittest discover -s tests -p 'test_native_dip.py' -v
+timeout 30s python3 -B -m unittest discover -s tests -p 'test_adapter_dip.py' -v
 markdownlint-cli2
 actionlint
 ```

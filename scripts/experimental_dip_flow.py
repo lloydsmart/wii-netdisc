@@ -91,9 +91,9 @@ def sequential(ins):
     return False
 
 
-def public_name(name):
+def public_name(name, symbols=SYMBOLS):
     canonical = re.sub(r"\.(?:constprop|isra)\.\d+$", "", name)
-    return canonical if canonical in SYMBOLS else "other"
+    return canonical if canonical in symbols else "other"
 
 
 def frame_evidence(name, entry, instructions, journal, unresolved):
@@ -125,7 +125,8 @@ def frame_evidence(name, entry, instructions, journal, unresolved):
             uncertain = True
         if op.startswith("b") or op == "pop" or not sequential(ins):
             past_entry = True
-    journal.write("frame", public_name(name), entry, saved, local, "unresolved" if uncertain else "entry-only")
+    journal.write("frame", public_name(name, journal.policy.SYMBOLS), entry, saved, local,
+                  "unresolved" if uncertain else "entry-only")
 
 
 def literal_value(code, pc, ins, match):
@@ -154,7 +155,10 @@ WITNESSES = {
 }
 
 
-def path_evidence(listing, journal, required=REQUIRED_PATHS):
+def path_evidence(listing, journal, required=None):
+    if required is None:
+        required = journal.policy.REQUIRED_PATHS
+    witnesses = getattr(journal.policy, "WITNESSES", WITNESSES)
     code, labels = listing.code, listing.labels
     entry = labels.get("DI_EmulateIoctl")
     # A call's continuation becomes reachable only after a return from its
@@ -282,8 +286,8 @@ def path_evidence(listing, journal, required=REQUIRED_PATHS):
         journal.write("edge", pc, dest, kind)
         target = code[dest].owner
         if dest == labels[target]:
-            pair = public_name(code[pc].owner), public_name(target)
-            for item, pairs in WITNESSES.items():
+            pair = public_name(code[pc].owner, journal.policy.SYMBOLS), public_name(target, journal.policy.SYMBOLS)
+            for item, pairs in witnesses.items():
                 if pair in pairs:
                     journal.write("witness", item, pc, dest)
     for fault in sorted(faults):
@@ -294,9 +298,9 @@ def path_evidence(listing, journal, required=REQUIRED_PATHS):
     uncertain_frames = {code[pc].owner for pc, _ in faults if pc in code}
     for name, instructions in by_owner.items():
         frame_evidence(name, labels[name], instructions, journal, name in uncertain_frames)
-    reached = {public_name(n) for n, addr in labels.items() if addr in pcs}
+    reached = {public_name(n, journal.policy.SYMBOLS) for n, addr in labels.items() if addr in pcs}
     for name in sorted(required - reached):
         journal.write("missing", name)
-    for item in sorted(CHECKLIST):
+    for item in sorted(journal.policy.CHECKLIST):
         journal.write("review", item, "manual-required")
     return pcs
