@@ -83,6 +83,27 @@ The native probe fixtures use the host GCC and Linux i386 process ABI with
 synthetic IOS calls. CI allows 30 seconds for the combined sizing tests.
 [Fixture assumptions and test coverage](research/fixture_sim/README.md)
 
+## Code scanning
+
+The [CodeQL workflow](.github/workflows/codeql.yml) scans pushes and pull requests
+for `develop` and `main`. It also runs weekly on the default branch (`develop`)
+and supports manual dispatch. Its `security-extended` suite includes the default
+security queries and adds lower-precision queries for maintainer triage.
+
+The three analyses cover the checked-in C sources and headers for the experimental
+DIP probe, adapter and native fixtures, the Python research modules, scripts and
+tests, and the GitHub Actions workflow definitions. Each publishes its own result.
+The Actions scan reads the definitions of the owner-gated measurement workflows
+without invoking them.
+
+C/C++ uses `build-mode: none`. CodeQL infers include paths and preprocessor
+definitions from the checkout. Missing upstream headers such as `plugin.h` and
+`syscalls.h` and target-specific compiler flags can limit type resolution and
+hide data flows. The scan omits the upstream tree assembled by the sizing build,
+including patched upstream C, and does not analyze the ARM assembly gates.
+Review extractor diagnostics and file coverage alongside alerts when establishing
+the baseline. [GitHub's compiled-language analysis guide](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/manage-your-configuration/codeql-for-compiled-languages)
+
 ## Questions and reports
 
 Use the [issue chooser](https://github.com/lloydsmart/wii-netdisc/issues/new/choose)
