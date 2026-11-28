@@ -171,7 +171,7 @@ Linker script and memory map
 
     def test_failure_orchestration_retains_unresolved_and_confirmed_ranges(self):
         for idx, (log, expected) in enumerate((
-                (self.exe_count, "region-overflow"),
+                (self.exe_count, "overflow-evidence-unresolved"),
                 (self.text_range.replace(".text", ".init"), "overflow-evidence-unresolved"))):
             work = self.root / str(idx)
             work.mkdir()
@@ -186,7 +186,8 @@ Linker script and memory map
                     patch.object(build.stock, "compile_extraction", side_effect=fail):
                 self.assertEqual(build.measure_pair(work, {"DEVKITARM": "/unused"}, self.journal), 1)
             self.assertEqual(self.rows("outcome")[-1], [expected])
-        self.assertEqual(len(self.rows("overflow")), 1)
+        self.assertEqual(len(self.rows("attempted")), 2)
+        self.assertEqual(self.rows("overflow"), [])
         collect(self.root, self.root / "public")
 
     def trace(self, listing, required=()):

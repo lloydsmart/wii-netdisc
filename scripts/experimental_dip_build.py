@@ -3,19 +3,21 @@
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import sys
 
 from . import stock_dip_build as stock
-from .experimental_dip_evidence import ARTIFACTS, DIAG_FILES, PATCHED, PINS, SECTIONS, Journal
+from . import experimental_dip_evidence as direct
+from .experimental_dip_evidence import DIAG_FILES, SECTIONS, Journal
 from .experimental_dip_inspect import ControlMismatch, OverflowUnresolved, inspect, overflow
 
-FIXTURE = stock.ROOT / "research/experimental_dip"
+FIXTURE = direct.FIXTURE
 
 
 def verify_fixture(source, log, journal):
-    for name, expected in PINS.items():
+    for name, expected in journal.policy.PINS.items():
         stock.verify(source / name, expected, log)
         journal.write("pin", name, expected)
 
@@ -23,25 +25,72 @@ def verify_fixture(source, log, journal):
 def integrate(root, inputs, log, journal):
     # Both extraction and mutation are confined to this fresh scratch tree.
     stock.verify(inputs, stock.SOURCE_HASH, log)
+    if any(root.iterdir()):
+        raise ValueError("probe extraction requires an empty directory")
     stock.command(["tar", "-xf", inputs], log, cwd=root)
-    verify_fixture(FIXTURE, log, journal)
+    verify_fixture(journal.policy.FIXTURE, log, journal)
     patch = root / "integration.patch"
-    shutil.copyfile(FIXTURE / patch.name, patch)
-    stock.verify(patch, PINS[patch.name], log)
+    shutil.copyfile(journal.policy.FIXTURE / patch.name, patch)
+    stock.verify(patch, journal.policy.PINS[patch.name], log)
     cmd = ["git", "apply", "--no-index", "--unidiff-zero", "--whitespace=error"]
     stock.command(cmd + ["--check", patch], log, cwd=root)
     stock.command(cmd + [patch], log, cwd=root)
-    for name, expected in PATCHED.items():
+    for name, expected in journal.policy.PATCHED.items():
         path = stock.DIP.parent / name
         stock.verify(root / path, expected, log)
         journal.write("pin", path, expected)
-    for name, expected in PINS.items():
+    for name, expected in journal.policy.PINS.items():
         if name != patch.name:
             dest = root / stock.DIP.parent / name
             if dest.exists():
                 raise ValueError("experimental source collision")
-            shutil.copyfile(FIXTURE / name, dest)
+            shutil.copyfile(journal.policy.FIXTURE / name, dest)
             stock.verify(dest, expected, log)
+
+    if any((root / name).exists() for name in journal.policy.ARTIFACTS):
+        raise ValueError("build outputs present before compilation")
+    makefile = (root / stock.DIP.parent / "Makefile").read_text().replace("\\\n", " ")
+    assignment = re.search(r"^OBJS\s*=([^\n]+)$", makefile, re.M)
+    if not assignment:
+        raise ValueError("missing patched link inputs")
+    objects = assignment[1].split()
+    expected = {Path(n).name for n in journal.policy.ARTIFACTS if n.startswith(direct.DIP) and n.endswith(".o")}
+    if len(objects) != len(expected) or set(objects) != expected:
+        raise ValueError("unexpected inputs to the patched link recipe")
+    return tuple(objects)
+
+
+def complete_link(root, toolchain, objects, log, journal, failed):
+    """The verified fresh Makefile fixes the ordered inputs and driver arguments."""
+    if not isinstance(objects, tuple) or not objects:
+        return False
+    required = journal.policy.ARTIFACTS - {direct.DIP + "dip-plugin" + ext for ext in (".elf", ".elf.orig")}
+    if any(not (root / n).is_file() or not (root / n).stat().st_size for n in required):
+        return False
+    driver = str(toolchain / "bin/arm-eabi-gcc")
+    flags = ("-mcpu=arm926ej-s -mthumb -mthumb-interwork -mbig-endian -nostartfiles -nostdlib "
+             "-Wl,-T,link.ld,-Map,dip-plugin.map -Wl,--gc-sections -Wl,-static").split()
+    argv = [driver, *flags, *objects, "../cios-lib/cios-lib.a", "-lgcc", "-o", "dip-plugin.elf.orig"]
+    lines = log.splitlines()
+    links = [i for i, line in enumerate(lines) if line.startswith(driver + " ") and shlex.split(line) == argv]
+    if len(links) != 1:
+        return False
+    before = "\n".join(lines[:links[0]])
+    if any(r[3] != "warning" for r in diagnostics(before)) or re.search(r"(?m)^make(?:\[\d+\])?: \*\*\*", before):
+        return False
+    if failed:
+        # Once the final recipe runs, only its range messages and its own
+        # failure/exit summaries can accompany an attributable overflow.
+        summary = r"make(?:\[\d+\])?: \*\*\* \[(?:[^\]]*: )?dip-plugin\.elf\] Error [1-9]\d*"
+        tail = [line for line in lines[links[0]+1:] if line.strip()]
+        if not any(re.fullmatch(summary, line) for line in tail):
+            return False
+        allowed = (summary, r"\S*\bld: .*", r"collect2: (?:error: )?ld returned [1-9]\d* exit status",
+                   r"make(?:\[\d+\])?: Leaving directory .+")
+        if any(not any(re.fullmatch(expr, line) for expr in allowed) for line in tail):
+            return False
+    journal.write("build", "probe", "complete-link-invoked")
+    return True
 
 
 # Severity and cause are derived from the private message. No message text,
@@ -65,18 +114,28 @@ CAUSE_PATTERNS = (
 )
 
 
-def diagnostics(log):
+def diagnostics(log, diag_files=DIAG_FILES):
     for line in log.splitlines():
         source = SOURCE_DIAG.match(line)
         if source:
             path, number, severity, message = source.groups()
             label = Path(path).name
-            label = label if label in DIAG_FILES else "other-input"
+            label = label if label in diag_files else "other-input"
             stage = "assembler" if path.lower().endswith(".s") else "compile"
+            fallback = "other-assembler" if stage == "assembler" else "other-compiler"
+        elif re.match(r"^make(?:\[\d+\])?: \*\*\* \[(?:[^\]]*: )?[^\]]+\.o\] Error ", line):
+            # Keep an earlier object-target failure visible in an interrupted
+            # journal even if make supplied the only error and no outcome follows.
+            yield "compile", "other-input", 0, "error", "other-compiler"
+            continue
+        elif re.match(r"^\S*\b(?:as|gcc|cc1):", line):
+            stage = "assembler" if re.match(r"^\S*\bas:", line) else "compile"
+            label, number, message = "other-input", 0, line
+            severity = "warning" if re.match(r"^\S+: warning:", line) else "error"
             fallback = "other-assembler" if stage == "assembler" else "other-compiler"
         elif re.search(r"undefined reference|multiple definition|^\S*\bld: ", line):
             stage, label, number, severity, message = "link", "ld", 0, "error", line
-            fallback = "region-range" if re.search(r"overflowed by|will not fit", line) else "other-link"
+            fallback = "region-range" if re.search(r"overflowed by|will not fit|overlaps section|is not within region", line) else "other-link"
         else:
             continue
         cause = next((key for key, pat in CAUSE_PATTERNS if re.search(pat, message, re.I)), fallback)
@@ -85,11 +144,11 @@ def diagnostics(log):
 
 def build_records(run, root, logfile, journal):
     journal.write("private-digest", run, "build-log", stock.digest(logfile))
-    for name in sorted(ARTIFACTS):
+    for name in sorted(journal.policy.ARTIFACTS):
         path = root / name
         if path.is_file():
             journal.write("artifact", run, name, path.stat().st_size, stock.digest(path))
-    for row in diagnostics(logfile.read_text(errors="replace")):
+    for row in diagnostics(logfile.read_text(errors="replace"), journal.policy.DIAG_FILES):
         journal.write("diagnostic", *row)
 
 
@@ -108,7 +167,7 @@ def build_outcome(log):
 
 def partial_objects(root, toolchain, journal):
     # Relocatable sizes help explain overflow; they are never linked spans.
-    for name in ("netdisc.o", "netdisc_net.o", "netdisc_gate.o"):
+    for name in journal.policy.OBJECTS:
         obj = root / stock.DIP.parent / name
         if not obj.is_file():
             continue
@@ -130,6 +189,7 @@ def record_inspection_error(work, run, error, journal):
 
 def measure_pair(work, env, journal):
     control = None
+    objects = None
     for run in ("control", "probe"):
         root = work / run
         root.mkdir()
@@ -139,7 +199,7 @@ def measure_pair(work, env, journal):
             if run == "probe":
                 journal.write("stage", "patch")
                 try:
-                    integrate(root, work / "inputs.tar", out, journal)
+                    objects = integrate(root, work / "inputs.tar", out, journal)
                 except stock.ERRORS as exc:
                     print(exc, file=out, flush=True)
                     build_records(run, root, log, journal)
@@ -158,19 +218,24 @@ def measure_pair(work, env, journal):
                 build_log = log.read_text(errors="replace")
                 outcome = build_outcome(build_log)
                 if run == "probe":
+                    evidence = []
+                    complete = complete_link(root, toolchain, objects, build_log, journal, failed=True)
                     try:
                         evidence = overflow(build_log, root / stock.DIP.with_suffix(".map"), journal)
                     except OverflowUnresolved:
+                        if outcome not in ("compile-error", "abi-layout-error"):
+                            outcome = "overflow-evidence-unresolved"
+                    if evidence and outcome not in ("compile-error", "abi-layout-error"):
                         outcome = "overflow-evidence-unresolved"
-                    else:
-                        for row in evidence:
-                            journal.write("overflow", *row)
-                        if evidence:
-                            outcome = "region-overflow"
                     try:
                         partial_objects(root, toolchain, journal)
                     except stock.ERRORS as exc:
                         record_inspection_error(work, run, exc, journal)
+                    else:
+                        if evidence and complete and outcome == "overflow-evidence-unresolved":
+                            for row in evidence:
+                                journal.write("overflow", *row)
+                            outcome = "region-overflow"
                 journal.write("outcome", outcome)
                 return 1
         # An incomplete inventory, converted ELF alone or unreconciled map
@@ -181,6 +246,9 @@ def measure_pair(work, env, journal):
         try:
             build_records(run, root, log, journal)
             stock.inventory(root, work)
+            if run == "probe" and not complete_link(root, toolchain, objects, log.read_text(errors="replace"),
+                                                    journal, failed=False):
+                raise ValueError("complete patched link invocation unconfirmed")
             journal.write("stage", "inspect")
             control = inspect(root, toolchain, journal, control)
         except (KeyError, *stock.ERRORS) as exc:
@@ -194,7 +262,7 @@ def measure_pair(work, env, journal):
     return 0
 
 
-def main():
+def main(policy=direct):
     if os.geteuid() == 0:
         raise ValueError("run unprivileged")
     work, source, archive = (Path(os.environ[n]).resolve() for n in ("WORK_DIR", "D2X_REPO", "R32_ARCHIVE"))
@@ -204,12 +272,12 @@ def main():
     work.mkdir()
     # Hosted approval/provisioning evidence is created before prepare().
     external = os.environ.get("SIZING_JOURNAL_DIR")
-    journal = Journal((Path(external) if external else work) / "sizing.jsonl")
+    journal = Journal((Path(external) if external else work) / "sizing.jsonl", policy)
     stage = "inputs"
     try:
         with (work / "preparation.log").open("w") as log:
             journal.write("stage", stage)
-            verify_fixture(FIXTURE, log, journal)
+            verify_fixture(journal.policy.FIXTURE, log, journal)
             stage = "prepare"
             journal.write("stage", stage)
             env = stock.prepare(work, source, archive, installed, log)

@@ -132,24 +132,37 @@ def inspect(root, toolchain, journal, control=None):
         journal.write("fill", run, int(addr, 16), int(size, 16))
     symbols = list_symbols(private_listing(root, toolchain, "symbols", ["nm", "-nS"], elf, journal))
     symbols = fingerprints(elf, symbols)
+    inventory = getattr(journal.policy, "layout_evidence", None)
+    if inventory:
+        inventory(run, sections, symbols, journal)
     for name, (kind, addr, size, checksum) in symbols.items():
-        journal.write("symbol", run, public_name(name), kind, addr, size, checksum or "unknown")
+        journal.write("symbol", run, public_name(name, journal.policy.SYMBOLS), kind, addr, size, checksum or "unknown")
     if control is not None:
         for name in sorted(control.keys() | symbols.keys()):
             before, after = control.get(name), symbols.get(name)
             if before != after:
                 why = "added" if before is None else "removed" if after is None else "changed"
-                journal.write("delta", public_name(name), why, before[1] if before else 0,
+                journal.write("delta", public_name(name, journal.policy.SYMBOLS), why, before[1] if before else 0,
                               after[1] if after else 0, before[2] if before else 0, after[2] if after else 0)
         asm = private_listing(root, toolchain, "disassembly", ["objdump", "-dz"], elf, journal)
-        path_evidence(disassembly(asm), journal)
+        listing = disassembly(asm)
+        path_evidence(listing, journal)
+        inventory_literals = getattr(journal.policy, "literal_evidence", None)
+        if inventory_literals:
+            inventory_literals(listing, journal)
         if any(n not in symbols for n in control if not n.endswith(("_veneer", "_from_thumb", "_from_arm"))):
             raise ValueError("stock symbol disappeared")
-        kind, addr, size, _ = symbols["nd_completions"]
-        if kind not in "Bb" or size != 2048 or addr % 32 or not any(
-            n == ".bss" and a <= addr and addr+size <= a+s for n, a, s, _ in sections
-        ):
-            raise ValueError("completion pool extent")
+        allocations = []
+        for name, expected in journal.policy.STORAGE.items():
+            kind, addr, size, _ = symbols[name]
+            if kind not in "Bb" or size != expected or addr % 32 or not any(
+                n == ".bss" and a <= addr and addr+size <= a+s for n, a, s, _ in sections
+            ):
+                raise ValueError("unreconciled static allocation: " + name)
+            allocations.append((addr, addr + size))
+        allocations.sort()
+        if any(left[1] > right[0] for left, right in zip(allocations, allocations[1:])):
+            raise ValueError("overlapping static allocations")
     return symbols
 
 
@@ -281,6 +294,19 @@ def overflow(log, link_map, journal):
                 or (attempted_end is not None and attempted_end != hi)):
             inconsistent = True
         evidence.append(row)
+    overflowing = {region for region in ("exe", "ram")
+                   if any(ranges[n][1] > REGIONS[region][1] for n in SECTION_ORDER[region])}
+    if {row[0] for row in evidence} != overflowing:
+        inconsistent = True
+    if "literal-site" in journal.policy.SCHEMA:
+        # Retain the map extents behind regional counts and companion overlaps.
+        for region in ("exe", "ram"):
+            _, limit = REGIONS[region]
+            for name in SECTION_ORDER[region]:
+                lo, hi = ranges[name]
+                row = region, name, lo, hi, max(0, hi-limit)
+                if row not in evidence:
+                    journal.write("attempted", *row)
     if inconsistent or not evidence:
         raise OverflowUnresolved("contradictory or unsupported diagnostics")
     return evidence

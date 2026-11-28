@@ -92,7 +92,7 @@ SCHEMA = {
     "outcome": [choices("control-mismatch invalid-evidence patch-error input-error build-error "
                         "region-overflow overflow-evidence-unresolved linked-review-required "
                         "linked-inspection-unresolved compile-error incomplete-link conversion-error abi-layout-error")],
-    "build": [RUN, choices("recipes-completed original-linked")],
+    "build": [RUN, choices("recipes-completed original-linked complete-link-invoked")],
     "pin": [set(INPUTS), SHA],
     "revision": [choices("checkout d2x"), pattern(r"[0-9a-f]{40}")],
     "tool": [choices("gcc ld make python"), VERSION],
@@ -125,7 +125,12 @@ RUNNER = {"image": {"ubuntu24"}, "version": pattern(r"20[0-9]{6}\.[0-9]{1,4}\.[0
           "run": integer(1, 2**63-1), "attempt": integer(1, 1), "uid": integer(1, 2**32-2)}
 
 
-def validate(row):
+FIXTURE = stock.ROOT / "research/experimental_dip"
+OBJECTS = ("netdisc.o", "netdisc_net.o", "netdisc_gate.o")
+STORAGE = {"nd_completions": 2048}
+
+
+def validate(row, schema=SCHEMA, inputs=INPUTS):
     if type(row) is not list or not row or type(row[0]) is not str:
         raise ValueError("malformed evidence row")
     kind = row[0]
@@ -133,12 +138,12 @@ def validate(row):
         if len(row) == 3 and isinstance(row[1], str) and row[1] in RUNNER and matches(RUNNER[row[1]], row[2]):
             return
         raise ValueError("invalid runner identity")
-    fields = SCHEMA.get(kind)
+    fields = schema.get(kind)
     if fields is None or len(row) != len(fields) + 1 or not all(
         matches(rule, value) for rule, value in zip(fields, row[1:])
     ):
         raise ValueError("invalid evidence fields")
-    if kind == "pin" and INPUTS[row[1]] != row[2]:
+    if kind == "pin" and inputs[row[1]] != row[2]:
         raise ValueError("unexpected input identity")
     if kind == "overflow-report":
         _, _, section, amount, reported_end = row
@@ -164,17 +169,18 @@ def validate(row):
 
 
 class Journal:
-    def __init__(self, path):
+    def __init__(self, path, policy=None):
         self.path = path
+        self.policy = policy or sys.modules[__name__]
 
     def write(self, kind, *fields):
         row = [kind, *(str(v) if isinstance(v, Path) else v for v in fields)]
-        validate(row)
+        validate(row, self.policy.SCHEMA, self.policy.INPUTS)
         with self.path.open("a", encoding="ascii") as stream:
             print(json.dumps(row, ensure_ascii=True), file=stream)
 
 
-def collect(work, destination):
+def collect(work, destination, schema=SCHEMA, inputs=INPUTS):
     destination.mkdir()
     for name in ALLOWED:
         src = work / name
@@ -185,7 +191,10 @@ def collect(work, destination):
             raise ValueError("empty sizing journal")
         rows = [json.loads(line) for line in lines]
         for row in rows:
-            validate(row)
+            validate(row, schema, inputs)
+        if "literal-site" in schema:
+            from .experimental_adapter import validate_journal
+            validate_journal(rows)
         # Reserialise only parsed data after validating the entire artifact.
         (destination / name).write_text("".join(json.dumps(row) + "\n" for row in rows))
 

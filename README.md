@@ -18,6 +18,7 @@ points still need source-level verification.
 - [Research plan and first milestone](research/feasibility-plan.md)
 - [Stock DIP build and footprint measurement](research/d2x-build-baseline.md#run-the-stock-measurement)
 - [Experimental direct-DIP sizing procedure](research/experimental_dip/README.md)
+- [Experimental DIP adapter and sizing procedure](research/experimental_adapter/README.md)
 - [Architecture boundaries](docs/architecture/README.md)
 - [Decision records](docs/decisions/README.md)
 - [Contributing and local checks](CONTRIBUTING.md)
