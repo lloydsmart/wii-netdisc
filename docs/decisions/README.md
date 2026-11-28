@@ -14,6 +14,7 @@ Acceptance records an explicit owner decision, not an agent's confidence.
 | [0003](0003-stock-dip-build-strategy.md) | Accepted | Make interface and PC-only stock DIP measurement |
 | [0004](0004-pc-only-fixture-simulation.md) | Accepted | Deterministic PC-only diagnostic fixture simulation |
 | [0005](0005-experimental-dip-sizing-link.md) | Accepted | PC-only sizing of one complete experimental direct-DIP TCP probe |
+| [0006](0006-dip-adapter-sizing-link.md) | Accepted | PC-only sizing of the DIP adapter common to the separate-service candidates |
 
 Technical architecture is still proposed. Create a new ADR when the feasibility
 research can support a concrete decision.

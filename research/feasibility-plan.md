@@ -47,9 +47,13 @@ Modified static RAM fit and runtime feasibility remain open.
 The [separate IOS service placement study](separate-ios-service-placement.md)
 identifies an MLOAD-started worker as a candidate for R0-02/03/05/06.
 Exclusive memory, caller permissions and bounded handback remain open.
-It proposes measuring the DIP adapter first, subject to a separate decision.
-R0 remains open and the hardware recovery gate remains closed. Upstream build
-scripts remain outside R0 except for the measurements scoped by ADRs 0003 and 0005.
+[ADR 0006](../docs/decisions/0006-dip-adapter-sizing-link.md) selects a PC-only
+measurement of the complete DIP adapter shared by all three placement candidates.
+Implementation follows independent review and merge of the record. Compiling
+either input requires separate owner approval for the exact reviewed merged SHA.
+Adapter fit and worker placement remain open. R0 remains open and the hardware
+recovery gate remains closed. Upstream build scripts remain outside R0 except
+for the measurements scoped by ADRs 0003, 0005 and 0006.
 
 ### Exit criteria
 
